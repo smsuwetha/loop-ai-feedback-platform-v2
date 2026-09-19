@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  ANALYST
+  VIEWER
+}
+
+enum Sentiment {
+  POS
+  NEU
+  NEG
+}
+
+enum FeedbackStatus {
+  NEW
+  REVIEWED
+  ACTIONED
+}
+
+enum FeedbackChannel {
+  MANUAL
+  CSV_IMPORT
+  SUPPORT
+  EMAIL
+  SURVEY
+  APP_STORE
+  PLAY_STORE
+  SOCIAL_MEDIA
+  SALES_NOTE
+}
+
+enum ClassificationStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  MANUAL_REVIEW
+}
+
+model Workspace {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String    @db.VarChar(150)
+  slug      String    @unique @db.VarChar(100)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  users    User[]
+  feedback Feedback[]
+  themes   Theme[]
+  reports  Report[]
+
+  @@index([deletedAt])
+  @@map("workspaces")
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  name         String    @db.VarChar(120)
+  email        String    @db.VarChar(255)
+  passwordHash String    @db.VarChar(255)
+  role         Role      @default(VIEWER)
+  workspaceId  String    @db.Uuid
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  workspace        Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  generatedReports Report[]  @relation("ReportGeneratedBy")
+
+  @@unique([workspaceId, email])
+  @@index([workspaceId])
+  @@index([workspaceId, role])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model Feedback {
+  id                      String               @id @default(uuid()) @db.Uuid
+  content                 String               @db.Text
+  channel                 FeedbackChannel
+  sourceRef               String?              @db.VarChar(255)
+  customerLabel           String?              @db.VarChar(150)
+  sentiment               Sentiment?
+  sentimentScore          Float?
+  featureArea             String?              @db.VarChar(150)
+  classificationRationale String?              @db.Text
+  classificationStatus    ClassificationStatus @default(PENDING)
+  classificationError     String?              @db.Text
+  status                  FeedbackStatus       @default(NEW)
+  workspaceId             String               @db.Uuid
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+  deletedAt               DateTime?
+
+  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  feedbackThemes FeedbackTheme[]
+  embedding      Embedding?
+
+  @@index([workspaceId])
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, channel])
+  @@index([workspaceId, sentiment])
+  @@index([workspaceId, status])
+  @@index([workspaceId, classificationStatus])
+  @@index([workspaceId, deletedAt])
+  @@map("feedback")
+}
+
+model Theme {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @db.VarChar(120)
+  description String?   @db.Text
+  color       String?   @db.VarChar(20)
+  workspaceId String    @db.Uuid
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  feedbackThemes FeedbackTheme[]
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId])
+  @@index([workspaceId, deletedAt])
+  @@map("themes")
+}
+
+model FeedbackTheme {
+  feedbackId String   @db.Uuid
+  themeId    String   @db.Uuid
+  confidence Float?
+  createdAt  DateTime @default(now())
+
+  feedback Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  theme    Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade)
+
+  @@id([feedbackId, themeId])
+  @@index([themeId])
+  @@map("feedback_themes")
+}
+
+model Embedding {
+  id         String   @id @default(uuid()) @db.Uuid
+  feedbackId String   @unique @db.Uuid
+  vector     Json
+  model      String   @db.VarChar(100)
+  dimensions Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  feedback Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+
+  @@map("embeddings")
+}
+
+model Report {
+  id          String    @id @default(uuid()) @db.Uuid
+  title       String    @db.VarChar(200)
+  periodStart DateTime
+  periodEnd   DateTime
+  contentJson Json
+  workspaceId String    @db.Uuid
+  generatedBy String    @db.Uuid
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  generator User      @relation("ReportGeneratedBy", fields: [generatedBy], references: [id], onDelete: Restrict)
+
+  @@index([workspaceId])
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, periodStart, periodEnd])
+  @@index([generatedBy])
+  @@index([workspaceId, deletedAt])
+  @@map("reports")
+}
