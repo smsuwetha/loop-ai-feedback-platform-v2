@@ -6,7 +6,8 @@ import { prisma } from "@/lib/db";
 import { signupSchema } from "@/lib/validations/auth";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "http://localhost:3001",
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
