@@ -93,7 +93,7 @@ export default function RegisterForm() {
 
       // Frontend (:3001) -> Backend (:3000)
       const response = await fetch(
-        "https://loop-ai-feedback-platform-v2.vercel.app/api/auth/signup",
+        "/backend/api/auth/signup",
         {
           method: "POST",
           headers: {
