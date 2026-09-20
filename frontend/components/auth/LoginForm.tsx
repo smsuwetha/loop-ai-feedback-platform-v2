@@ -119,6 +119,12 @@ export default function LoginForm() {
           redirect: "manual",
         }
       );
+console.log("LOGIN STATUS:", loginResponse.status);
+console.log("LOGIN URL:", loginResponse.url);
+console.log(
+  "LOGIN HEADERS:",
+  Object.fromEntries(loginResponse.headers.entries())
+);
 
       let loginData: LoginResponse = {};
 
