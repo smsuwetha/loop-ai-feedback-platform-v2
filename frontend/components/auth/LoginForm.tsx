@@ -102,8 +102,8 @@ export default function LoginForm() {
       );
 
       formData.append(
-        "json",
-        "true"
+        "redirect",
+        "false"
       );
 
       const loginResponse = await fetch(
