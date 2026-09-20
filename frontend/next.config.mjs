@@ -4,7 +4,7 @@ const nextConfig = {
     return [
       {
         source: "/backend/:path*",
-        destination: "http://localhost:3000/:path*",
+        destination: "https://loop-ai-feedback-platform-v2.vercel.app/:path*",
       },
     ];
   },

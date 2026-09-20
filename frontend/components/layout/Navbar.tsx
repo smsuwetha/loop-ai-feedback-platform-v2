@@ -46,7 +46,7 @@ export default function Navbar({
   const handleSignOut = async () => {
   try {
     await fetch(
-      "http://localhost:3000/api/auth/logout",
+      "https://loop-ai-feedback-platform-v2.vercel.app/api/auth/logout",
       {
         method: "POST",
         credentials: "include",
